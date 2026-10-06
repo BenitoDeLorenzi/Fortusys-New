@@ -55,7 +55,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { protestOptions, usesProtestDays } from "@/features/billing/ticket-options";
+import { protestOptions, usesProtestDays, getTicketPenaltyFields, type TicketPenaltyOptions } from "@/features/billing/ticket-options";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -622,6 +622,10 @@ export function RealEstateAssetFinanceManagement({
   const [ticketProtestCode, setTicketProtestCode] = useState("3");
   const [ticketProtestDays, setTicketProtestDays] = useState("");
   const [ticketIsHybrid, setTicketIsHybrid] = useState(false);
+  const [ticketPenalties, setTicketPenalties] = useState<TicketPenaltyOptions>({
+    interestCode: "2", interestDate: "", interestValue: "0,03",
+    fineCode: "2", fineDate: "", fineValue: "10,00",
+  });
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<Filters>({
@@ -1077,6 +1081,13 @@ export function RealEstateAssetFinanceManagement({
   }
 
   async function openTicketDialog(charge: RealEstateCharge) {
+    const startDate = new Date(charge.dueDate + "T00:00:00Z");
+    startDate.setUTCDate(startDate.getUTCDate() + 1);
+    const penaltyDate = startDate.toISOString().slice(0, 10);
+    setTicketPenalties({
+      interestCode: "2", interestDate: penaltyDate, interestValue: "0,03",
+      fineCode: "2", fineDate: penaltyDate, fineValue: "10,00",
+    });
     setTicketProtestCode("3");
     setTicketProtestDays("");
     setTicketIsHybrid(false);
@@ -1128,6 +1139,7 @@ export function RealEstateAssetFinanceManagement({
     setTicketGeneratingId(ticketDialogCharge.id);
 
     try {
+      getTicketPenaltyFields(ticketPenalties);
       const response = await fetch(
         `/api/real-estate/charges/${ticketDialogCharge.id}/ticket`,
         {
@@ -1139,6 +1151,7 @@ export function RealEstateAssetFinanceManagement({
             protestCode: ticketProtestCode,
             protestDays: ticketProtestDays,
             isHybrid: ticketIsHybrid,
+            ...ticketPenalties,
           }),
         }
       );
@@ -2662,6 +2675,45 @@ export function RealEstateAssetFinanceManagement({
                     </div>
                   ) : null}
                 </div>
+                {(["interest", "fine"] as const).map((kind) => {
+                  const isInterest = kind === "interest";
+                  const codeKey = isInterest ? "interestCode" : "fineCode";
+                  const dateKey = isInterest ? "interestDate" : "fineDate";
+                  const valueKey = isInterest ? "interestValue" : "fineValue";
+                  const code = ticketPenalties[codeKey];
+                  const enabled = code !== (isInterest ? "3" : "0");
+                  const options = isInterest
+                    ? [{ value: "3", label: "Isento" }, { value: "1", label: "Valor por dia" }, { value: "2", label: "Taxa mensal" }]
+                    : [{ value: "0", label: "Não registrar" }, { value: "1", label: "Valor fixo" }, { value: "2", label: "Percentual" }];
+                  const valueLabel = code === "1"
+                    ? (isInterest ? "Valor por dia (R$)" : "Valor da multa (R$)")
+                    : (isInterest ? "Taxa mensal (%)" : "Percentual da multa (%)");
+                  return (
+                    <fieldset key={kind} className="space-y-3 rounded-md border p-4" disabled={Boolean(ticketGeneratingId)}>
+                      <legend className="px-1 text-sm font-semibold">{isInterest ? "Juros" : "Multa"}</legend>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2 sm:col-span-2">
+                          <label htmlFor={`ticket-${kind}-code`} className="text-sm font-medium">{isInterest ? "Tipo de juros" : "Tipo de multa"}</label>
+                          <NativeSelect id={`ticket-${kind}-code`} value={code} onChange={(event) => setTicketPenalties((current) => ({ ...current, [codeKey]: event.target.value }))}>
+                            {options.map((option) => <NativeSelectOption key={option.value} value={option.value}>{option.label}</NativeSelectOption>)}
+                          </NativeSelect>
+                        </div>
+                        {enabled ? (
+                          <>
+                            <div className="space-y-2">
+                              <label htmlFor={`ticket-${kind}-date`} className="text-sm font-medium">Data de início</label>
+                              <Input id={`ticket-${kind}-date`} type="date" value={ticketPenalties[dateKey]} onChange={(event) => setTicketPenalties((current) => ({ ...current, [dateKey]: event.target.value }))} />
+                            </div>
+                            <div className="space-y-2">
+                              <label htmlFor={`ticket-${kind}-value`} className="text-sm font-medium">{valueLabel}</label>
+                              <Input id={`ticket-${kind}-value`} inputMode="decimal" placeholder="0,00" value={ticketPenalties[valueKey]} onChange={(event) => setTicketPenalties((current) => ({ ...current, [valueKey]: event.target.value }))} />
+                            </div>
+                          </>
+                        ) : null}
+                      </div>
+                    </fieldset>
+                  );
+                })}
               </>
             ) : null}
           </div>

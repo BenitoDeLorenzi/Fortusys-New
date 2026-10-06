@@ -1,5 +1,5 @@
 import { getBankTicketFields } from "@/features/billing/server/bank-ticket-fields";
-import { getRealEstateTicketOptions } from "@/features/billing/ticket-options";
+import { getRealEstateTicketOptions, getTicketPenaltyFields, type TicketPenaltyOptions } from "@/features/billing/ticket-options";
 import { NextResponse } from "next/server";
 
 import {
@@ -53,7 +53,7 @@ type ChargeRow = {
   ticket_status: "not_generated" | "registering" | "registered" | "failed" | "canceled";
 };
 
-type TicketPayload = {
+type TicketPayload = Partial<TicketPenaltyOptions> & {
   accountId?: string;
   agreementId?: string;
   protestCode?: string;
@@ -375,6 +375,7 @@ export async function GET(_request: Request, { params }: TicketRouteProps) {
     }
 
     const chargeRow = charge as ChargeRow;
+
     const [
       { data: asset, error: assetError },
       { data: lease, error: leaseError },
@@ -508,6 +509,20 @@ export async function POST(_request: Request, { params }: TicketRouteProps) {
     }
 
     const chargeRow = charge as ChargeRow;
+    const penaltyStartDate = addDaysToIsoDate(chargeRow.due_date, 1);
+    let penaltyFields: Record<string, string>;
+    try {
+      penaltyFields = getTicketPenaltyFields({
+        interestCode: payload.interestCode ?? "2",
+        interestDate: payload.interestDate ?? penaltyStartDate,
+        interestValue: payload.interestValue ?? "0,03",
+        fineCode: payload.fineCode ?? "2",
+        fineDate: payload.fineDate ?? penaltyStartDate,
+        fineValue: payload.fineValue ?? "10,00",
+      });
+    } catch (error) {
+      return NextResponse.json({ message: error instanceof Error ? error.message : "Juros ou multa inválidos." }, { status: 400 });
+    }
 
     if (chargeRow.status === "canceled") {
       return NextResponse.json(
@@ -589,7 +604,6 @@ export async function POST(_request: Request, { params }: TicketRouteProps) {
       null;
     const bankFields = getBankTicketFields(account?.bankCode);
     const messages = buildTicketMessages(chargeRow, leaseRow, itemRows);
-    const penaltyStartDate = formatDateToTecnospeed(addDaysToIsoDate(chargeRow.due_date, 1));
     const body: Record<string, unknown> = {
       CedenteContaCodigoBanco: onlyDigits(account?.bankCode),
       CedenteContaNumero: onlyDigits(account?.accountNumber),
@@ -619,12 +633,7 @@ export async function POST(_request: Request, { params }: TicketRouteProps) {
       TituloAceite: "N",
       TituloMensagem01: messages.message1,
       TituloMensagem02: messages.message2,
-      TituloCodigoJuros: "2",
-      TituloDataJuros: penaltyStartDate,
-      TituloValorJuros: "0,03",
-      TituloCodigoMulta: "2",
-      TituloDataMulta: penaltyStartDate,
-      TituloValorMultaTaxa: "10,00",
+      ...penaltyFields,
       ...ticketOptions,
     };
     const requiredFields = [
