@@ -55,6 +55,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { protestOptions, usesProtestDays } from "@/features/billing/ticket-options";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -605,6 +606,9 @@ export function RealEstateAssetFinanceManagement({
   const [isLoadingTicketDialog, setIsLoadingTicketDialog] = useState(false);
   const [selectedTicketAccountId, setSelectedTicketAccountId] = useState("");
   const [selectedTicketAgreementId, setSelectedTicketAgreementId] = useState("");
+  const [ticketProtestCode, setTicketProtestCode] = useState("3");
+  const [ticketProtestDays, setTicketProtestDays] = useState("");
+  const [ticketIsHybrid, setTicketIsHybrid] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<Filters>({
@@ -1060,6 +1064,9 @@ export function RealEstateAssetFinanceManagement({
   }
 
   async function openTicketDialog(charge: RealEstateCharge) {
+    setTicketProtestCode("3");
+    setTicketProtestDays("");
+    setTicketIsHybrid(false);
     setTicketDialogCharge(charge);
     setTicketDialogData(null);
     setSelectedTicketAccountId("");
@@ -1101,6 +1108,10 @@ export function RealEstateAssetFinanceManagement({
       return;
     }
 
+    if (usesProtestDays(ticketProtestCode) && (!/^\d{1,2}$/.test(ticketProtestDays) || Number(ticketProtestDays) < 1)) {
+      toast.warning("Informe um prazo de protesto entre 1 e 99 dias.");
+      return;
+    }
     setTicketGeneratingId(ticketDialogCharge.id);
 
     try {
@@ -1112,6 +1123,9 @@ export function RealEstateAssetFinanceManagement({
           body: JSON.stringify({
             accountId: selectedTicketAccountId,
             agreementId: selectedTicketAgreementId,
+            protestCode: ticketProtestCode,
+            protestDays: ticketProtestDays,
+            isHybrid: ticketIsHybrid,
           }),
         }
       );
@@ -2440,7 +2454,7 @@ export function RealEstateAssetFinanceManagement({
         }}
         open={Boolean(ticketDialogCharge)}
       >
-        <AlertDialogContent className="max-w-2xl">
+        <AlertDialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <AlertDialogHeader className="items-start text-left">
             <AlertDialogTitle>Gerar boleto</AlertDialogTitle>
             <AlertDialogDescription>
@@ -2577,6 +2591,27 @@ export function RealEstateAssetFinanceManagement({
                       ))}
                     </NativeSelect>
                   </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label htmlFor="ticket-type" className="text-sm font-medium">Tipo de boleto</label>
+                    <NativeSelect id="ticket-type" value={ticketIsHybrid ? "hybrid" : "traditional"} disabled={Boolean(ticketGeneratingId)} onChange={(event) => setTicketIsHybrid(event.target.value === "hybrid")}>
+                      <NativeSelectOption value="traditional">Boleto tradicional (sem Pix)</NativeSelectOption>
+                      <NativeSelectOption value="hybrid">Boleto híbrido (com Pix)</NativeSelectOption>
+                    </NativeSelect>
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="ticket-protest" className="text-sm font-medium">Protesto</label>
+                    <NativeSelect id="ticket-protest" value={ticketProtestCode} disabled={Boolean(ticketGeneratingId)} onChange={(event) => setTicketProtestCode(event.target.value)}>
+                      {protestOptions.map((option) => <NativeSelectOption key={option.value} value={option.value}>{option.label}</NativeSelectOption>)}
+                    </NativeSelect>
+                  </div>
+                  {usesProtestDays(ticketProtestCode) ? (
+                    <div className="space-y-2">
+                      <label htmlFor="ticket-protest-days" className="text-sm font-medium">Prazo de protesto (dias)</label>
+                      <Input id="ticket-protest-days" type="number" min={1} max={99} step={1} value={ticketProtestDays} disabled={Boolean(ticketGeneratingId)} onChange={(event) => setTicketProtestDays(event.target.value)} />
+                    </div>
+                  ) : null}
                 </div>
               </>
             ) : null}

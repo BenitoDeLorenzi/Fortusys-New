@@ -1,4 +1,5 @@
 import { getBankTicketFields } from "@/features/billing/server/bank-ticket-fields";
+import { getRealEstateTicketOptions } from "@/features/billing/ticket-options";
 import { NextResponse } from "next/server";
 
 import {
@@ -55,6 +56,9 @@ type ChargeRow = {
 type TicketPayload = {
   accountId?: string;
   agreementId?: string;
+  protestCode?: string;
+  protestDays?: string;
+  isHybrid?: boolean;
 };
 
 type ChargeTicketInsert = {
@@ -473,6 +477,15 @@ export async function GET(_request: Request, { params }: TicketRouteProps) {
 export async function POST(_request: Request, { params }: TicketRouteProps) {
   const { chargeId } = await params;
   const payload = (await _request.json().catch(() => ({}))) as TicketPayload;
+  let ticketOptions: Record<string, string | boolean>;
+  try {
+    ticketOptions = getRealEstateTicketOptions(payload);
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Opções de boleto inválidas." },
+      { status: 400 }
+    );
+  }
   const supabase = createAdminClient();
   const authUser = await requireAuthenticatedUser();
   const appUser = authUser
@@ -612,9 +625,7 @@ export async function POST(_request: Request, { params }: TicketRouteProps) {
       TituloCodigoMulta: "2",
       TituloDataMulta: penaltyStartDate,
       TituloValorMultaTaxa: "10,00",
-      TituloCodProtesto: "1",
-      TituloPrazoProtesto: "30",
-      hibrido: true,
+      ...ticketOptions,
     };
     const requiredFields = [
       { label: "CPF/CNPJ do cedente", value: assignorDocument },
