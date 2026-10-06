@@ -105,6 +105,7 @@ import type {
   BillingTicketsResponse,
 } from "@/features/billing/types";
 import { getBrazilianBankName } from "@/features/billing/banks";
+import { BankIcon } from "@/features/billing/components/bank-icon";
 import { formatDocument } from "@/features/billing/utils";
 import { RealEstateMetricCard as MetricCard } from "@/features/real-estate/components/real-estate-metric-card";
 import { createClient } from "@/lib/supabase/client";
@@ -3379,7 +3380,7 @@ export function BillingManagement() {
                               status={getTicketDisplayStatus(ticket)}
                             />
                           </TableCell>
-                          <TableCell>{ticket.bankName}</TableCell>
+                          <TableCell><BankIcon code={ticket.bankCode} name={ticket.bankName} /></TableCell>
                           <TableCell>{ticket.ourNumber || "-"}</TableCell>
                           <TableCell>{ticket.documentNumber || "-"}</TableCell>
                           <TableCell>{ticket.installment}</TableCell>

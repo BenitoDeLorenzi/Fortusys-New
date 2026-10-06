@@ -1,0 +1,191 @@
+{
+  "collection": "https://github.com/rzmt/logos-bancos-br",
+  "notice": "Logotipos pertencem às respectivas instituições financeiras. Uso para identificação.",
+  "banks": [
+    {
+      "code": "001",
+      "name": "Banco do Brasil",
+      "source": "https://www.bb.com.br/docs/pub/inst/img/LogoBB.svg"
+    },
+    {
+      "code": "003",
+      "name": "Banco da Amazônia",
+      "source": "https://d1rb2uej4kk1a4.cloudfront.net/bancoamazonia/Logo_SVG_2025_06db299653.svg"
+    },
+    {
+      "code": "004",
+      "name": "Banco do Nordeste",
+      "source": "https://consentimento.openfinance.bnb.gov.br/logo_bnb.svg"
+    },
+    {
+      "code": "021",
+      "name": "Banestes",
+      "source": "https://cdn.banestes.b.br/openbanking/img/logo_centralizada.svg"
+    },
+    {
+      "code": "033",
+      "name": "Santander",
+      "source": "https://cms.santander.com.br/sites/WPS/imagem/santander_chama/23-10-31_194829_P_santander_chama.svg"
+    },
+    {
+      "code": "037",
+      "name": "Banpará",
+      "source": "https://www.banpara.b.br/PortalImagens/52jlv5s3/logobanparaos5415-01.svg"
+    },
+    {
+      "code": "041",
+      "name": "Banrisul",
+      "source": "https://banrisul.com.br/bob/data/Simbolo-Banrisul.svg"
+    },
+    {
+      "code": "047",
+      "name": "Banese",
+      "source": "https://consentimento.openbanking.banese.com.br/assets/logo_banese.svg"
+    },
+    {
+      "code": "069",
+      "name": "Crefisa",
+      "source": "https://www.crefisa.com.br/wp-content/uploads/2019/05/Logo.svg"
+    },
+    {
+      "code": "070",
+      "name": "BRB",
+      "source": "https://novo.brb.com.br/wp-content/uploads/2025/07/brb-preto-1.svg"
+    },
+    {
+      "code": "077",
+      "name": "Inter",
+      "source": "https://marketing.bancointer.com.br/arquivos/images/app-icon.svg"
+    },
+    {
+      "code": "085",
+      "name": "Ailos",
+      "source": "https://www.ailos.coop.br/wp-content/uploads/2023/06/Logos_512x512px_Ailos.svg"
+    },
+    {
+      "code": "102",
+      "name": "XP Investimentos",
+      "source": "https://openbanking-redirect.xpi.com.br/assets/xpi.svg"
+    },
+    {
+      "code": "104",
+      "name": "Caixa",
+      "source": "https://consentimento.openbanking.caixa.gov.br/assets/images/logomarca_caixa.svg"
+    },
+    {
+      "code": "121",
+      "name": "Agibank",
+      "source": "https://agibank.com.br/logo.svg"
+    },
+    {
+      "code": "136",
+      "name": "Unicred",
+      "source": "https://unicred.com.br/site/logo_unicred_vertical-margem90px.svg"
+    },
+    {
+      "code": "197",
+      "name": "Stone",
+      "source": "https://public-assets.stone.com.br/openfinance/stone-logo.svg"
+    },
+    {
+      "code": "208",
+      "name": "BTG Pactual",
+      "source": "https://banking-public-prd.s3.sa-east-1.amazonaws.com/open-finance/logo/btginvestimentos/btginvestimentos.svg"
+    },
+    {
+      "code": "218",
+      "name": "BS2",
+      "source": "https://www.bancobs2.com.br/wp-content/uploads/2025/09/favicon.png"
+    },
+    {
+      "code": "237",
+      "name": "Bradesco",
+      "source": "https://banco.bradesco/open-finance/logo/icones_vetorial-pf.svg"
+    },
+    {
+      "code": "246",
+      "name": "ABC Brasil",
+      "source": "https://www.abcbrasil.com.br/index_files/logo-abc-ocre.svg"
+    },
+    {
+      "code": "260",
+      "name": "Nubank",
+      "source": "https://nuapp.nubank.com.br/open-banking/logo.svg"
+    },
+    {
+      "code": "290",
+      "name": "PagBank",
+      "source": "https://openfinance.api.pagseguro.uol.com.br/img/logo_pagbank.svg"
+    },
+    {
+      "code": "318",
+      "name": "BMG",
+      "source": "https://www.bancobmg.com.br/data/files/8C/A2/7F/0A/FBA318104A94D208970BE9C2/bmg_open_finance.svg"
+    },
+    {
+      "code": "323",
+      "name": "Mercado Pago",
+      "source": "https://http2.mlstatic.com/open-banking/assets/logo.svg"
+    },
+    {
+      "code": "335",
+      "name": "Digio",
+      "source": "https://static.digio.com.br/media/logo_81e95ae2ab.svg"
+    },
+    {
+      "code": "336",
+      "name": "C6 Bank",
+      "source": "https://cdn.c6bank.com.br/open-banking/c6bank-logo.svg"
+    },
+    {
+      "code": "341",
+      "name": "Itaú",
+      "source": "https://www.itau.com.br/media/dam/m/4ee2c952e1fa91a2/original/Novo_itau.svg"
+    },
+    {
+      "code": "380",
+      "name": "PicPay",
+      "source": "https://picpay.s3.sa-east-1.amazonaws.com/openbanking/picpay-logo-icon-pf.svg"
+    },
+    {
+      "code": "389",
+      "name": "Mercantil",
+      "source": "https://www.bancomercantil.com.br/imagens/openbanking/mercantil.svg"
+    },
+    {
+      "code": "422",
+      "name": "Safra",
+      "source": "https://www.safra.com.br/shared/assets/img/safra-of.svg"
+    },
+    {
+      "code": "536",
+      "name": "Neon",
+      "source": "https://opbk-brasil.s3.sa-east-1.amazonaws.com/neon/logo.svg"
+    },
+    {
+      "code": "623",
+      "name": "Banco Pan",
+      "source": "https://www.bancopan.com.br/content/dam/documentos/outros-produtos/open-banking/logo_pan_openbanking.svg"
+    },
+    {
+      "code": "637",
+      "name": "Sofisa",
+      "source": "https://www.sofisa.com.br/openbanking/logo_sofisa.svg"
+    },
+    {
+      "code": "655",
+      "name": "Banco Votorantim",
+      "source": "https://www.bv.com.br/ng15-open-base-recepcao-jornada/assets/images/logo-bv.svg"
+    },
+    {
+      "code": "748",
+      "name": "Sicredi",
+      "source": "https://www.sicredi.com.br/openbanking/app/assets/images/shared/logo/logo_sicredi_512.svg"
+    },
+    {
+      "code": "756",
+      "name": "Sicoob",
+      "source": "https://sicoob-openbanking.s3.sa-east-1.amazonaws.com/icone-sicoob.svg"
+    }
+  ]
+}
