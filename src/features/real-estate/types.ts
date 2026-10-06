@@ -1,4 +1,5 @@
 export type RealEstateAsset = {
+  contractStatus?: "draft" | "active" | "ended" | "canceled" | null;
   id: string;
   firestoreId: string | null;
   code: number | null;

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   ArrowLeft,
   BadgeDollarSign,
@@ -9,6 +10,10 @@ import {
   CheckCircle2,
   CircleDollarSign,
   ExternalLink,
+  Pencil,
+  Receipt,
+  ReceiptText,
+  FileText,
   RefreshCw,
   Search,
   TrendingUp,
@@ -30,6 +35,7 @@ import {
   type StatusTone,
 } from "@/components/management/semantic-status-badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -51,6 +57,20 @@ import type {
 import { RealEstateMetricCard as MetricCard } from "@/features/real-estate/components/real-estate-metric-card";
 
 const activeLandlordStorageKey = "fortusys:real-estate:active-landlord";
+const RealEstateAssetFinanceManagement = dynamic(() =>
+  import("@/features/real-estate/components/real-estate-asset-finance-management").then(
+    (module) => module.RealEstateAssetFinanceManagement
+  )
+);
+
+function RowAction({ label, onClick, children, disabled = false }: { label: string; onClick: () => void; children: React.ReactNode; disabled?: boolean }) {
+  return <Tooltip>
+    <TooltipTrigger render={<Button aria-label={label} onClick={onClick} disabled={disabled} size="icon" variant="ghost" type="button" />}>
+      {children}
+    </TooltipTrigger>
+    <TooltipContent>{label}</TooltipContent>
+  </Tooltip>;
+}
 
 const months = [
   { value: 1, label: "Janeiro" },
@@ -211,6 +231,15 @@ export function RealEstateMonthlyChargesManagement({
   const [preview, setPreview] =
     useState<RealEstateMonthlyChargesPreviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [action, setAction] = useState<{
+    assetId: string;
+    kind: "create" | "edit" | "ticket" | "print";
+    chargeId: string | null;
+    leaseId: string;
+    month: number;
+    year: number;
+    dueDate: string | null;
+  } | null>(null);
   const yearOptions = useMemo(() => getYearOptions(defaults.year), [defaults.year]);
 
   async function loadPreview(nextMonth = month, nextYear = year) {
@@ -274,6 +303,11 @@ export function RealEstateMonthlyChargesManagement({
     router.push(`/imobiliaria/${item.assetId}/financeiro?returnTab=cobrancas`);
   }
 
+  function openAction(item: RealEstateMonthlyChargePreviewItem, kind: NonNullable<typeof action>["kind"]) {
+    if (!preview) return;
+    setAction({ assetId: item.assetId, kind, chargeId: item.chargeId, leaseId: item.leaseId, month: preview.competenceMonth, year: preview.competenceYear, dueDate: item.dueDate });
+  }
+
   return (
     <ManagementPage className="flex flex-col gap-3 space-y-0">
       {embedded ? null : (
@@ -295,7 +329,7 @@ export function RealEstateMonthlyChargesManagement({
             </>
           }
           badge="Financeiro mensal"
-          description="Acompanhe a competência do mês e acesse o financeiro de cada imóvel para lançar cobranças com seus adicionais."
+          description="Lance cobranças, edite valores e gere boletos diretamente na competência mensal."
           icon={CalendarClock}
           title="Financeiro mensal"
         />
@@ -322,7 +356,7 @@ export function RealEstateMonthlyChargesManagement({
             value={preview.summary.launched}
           />
           <MetricCard
-            description="Entrar no imóvel para lançar"
+            description="Cobranças aguardando lançamento"
             icon={BadgeDollarSign}
             title="Pendentes"
             tone="warning"
@@ -416,12 +450,13 @@ export function RealEstateMonthlyChargesManagement({
                   <TableHead className="text-right">Lançado</TableHead>
                   <TableHead>Cobrança</TableHead>
                   <TableHead>Boleto</TableHead>
-                  <TableHead className="w-36 text-right">Ação</TableHead>
+                  <TableHead className="w-36 text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {preview.items.map((item) => {
                   const ticketLabel = getTicketLabel(item);
+                  const editable = Boolean(item.chargeId) && ["open", "overdue"].includes(item.chargeStatus ?? "") && !["registering", "registered"].includes(item.ticketStatus ?? "");
 
                   return (
                     <TableRow key={item.leaseId}>
@@ -468,7 +503,7 @@ export function RealEstateMonthlyChargesManagement({
                           )}
                           {item.reason ? (
                             <p className="max-w-56 text-xs text-muted-foreground">
-                              {item.reason}
+                              {item.status === "not_launched" ? "Use Lançar cobrança nas ações desta linha." : item.reason}
                             </p>
                           ) : null}
                         </div>
@@ -485,19 +520,15 @@ export function RealEstateMonthlyChargesManagement({
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          onClick={() => openAssetFinance(item)}
-                          size="sm"
-                          type="button"
-                          variant={item.chargeId ? "outline" : "default"}
-                        >
-                          {item.chargeId ? (
-                            <ExternalLink className="size-4" />
-                          ) : (
-                            <BadgeDollarSign className="size-4" />
-                          )}
-                          {item.chargeId ? "Abrir" : "Lançar"}
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <RowAction label="Financeiro do imóvel" onClick={() => openAssetFinance(item)} disabled={Boolean(action)}><ExternalLink className="size-4" /></RowAction>
+                          {!item.chargeId && item.status === "not_launched" ? <RowAction label="Lançar cobrança" onClick={() => openAction(item, "create")} disabled={Boolean(action)}><Receipt className="size-4" /></RowAction> : null}
+                          {editable ? <>
+                            <RowAction label="Editar cobrança" onClick={() => openAction(item, "edit")} disabled={Boolean(action)}><Pencil className="size-4" /></RowAction>
+                            <RowAction label="Gerar boleto" onClick={() => openAction(item, "ticket")} disabled={Boolean(action)}><ReceiptText className="size-4" /></RowAction>
+                          </> : null}
+                          {item.chargeId && item.ticketStatus === "registered" ? <RowAction label="Visualizar boleto" onClick={() => openAction(item, "print")} disabled={Boolean(action)}><FileText className="size-4" /></RowAction> : null}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -507,6 +538,15 @@ export function RealEstateMonthlyChargesManagement({
           </ManagementTableFrame>
         )}
       </ManagementDataCard>
+      {action ? <>
+        <p className="order-4 text-sm text-muted-foreground" role="status">Preparando ação para o imóvel selecionado…</p>
+        <RealEstateAssetFinanceManagement assetId={action.assetId} inlineAction={action} onActionClose={() => {
+          setAction(null);
+          setMonth(action.month);
+          setYear(action.year);
+          void loadPreview(action.month, action.year);
+        }} />
+      </> : null}
     </ManagementPage>
   );
 }

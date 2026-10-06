@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Banknote,
@@ -90,6 +90,15 @@ import { createClient } from "@/lib/supabase/client";
 
 type RealEstateAssetFinanceManagementProps = {
   assetId: string;
+  inlineAction?: {
+    kind: "create" | "edit" | "ticket" | "print";
+    chargeId: string | null;
+    leaseId: string;
+    month: number;
+    year: number;
+    dueDate: string | null;
+  };
+  onActionClose?: () => void;
 };
 
 const returnTabs = ["resumo", "imoveis", "agenda", "cobrancas"] as const;
@@ -572,7 +581,11 @@ function formatOptionalCurrency(value: number) {
 
 export function RealEstateAssetFinanceManagement({
   assetId,
+  inlineAction,
+  onActionClose,
 }: RealEstateAssetFinanceManagementProps) {
+  const actionStarted = useRef(false);
+  const [actionReady, setActionReady] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTab = getReturnTab(searchParams.get("returnTab"));
@@ -1434,8 +1447,43 @@ export function RealEstateAssetFinanceManagement({
     (account) => account.id === selectedTicketAccountId
   );
 
+  useEffect(() => {
+    if (!inlineAction || isLoading || actionStarted.current) return;
+    actionStarted.current = true;
+    void (async () => {
+      if (!data) { onActionClose?.(); return; }
+      if (inlineAction.kind === "create") {
+        if (data.activeContract?.id !== inlineAction.leaseId) {
+          toast.warning("O contrato ativo mudou. Atualize a consulta mensal.");
+          onActionClose?.(); return;
+        }
+        if (data.charges.some((charge) => charge.leaseId === inlineAction.leaseId && charge.competenceMonth === inlineAction.month && charge.competenceYear === inlineAction.year)) {
+          toast.warning("Já existe uma cobrança para este contrato e competência.");
+          onActionClose?.(); return;
+        }
+        openNewChargeSheet();
+        setForm({ ...getDefaultForm(data), competenceMonth: String(inlineAction.month), competenceYear: String(inlineAction.year), dueDate: inlineAction.dueDate ?? getDueDate(inlineAction.month, inlineAction.year, data.activeContract.paymentDueDay ?? 10) });
+      } else {
+        const charge = data.charges.find((item) => item.id === inlineAction.chargeId && item.leaseId === inlineAction.leaseId);
+        if (!charge) { toast.warning("Cobrança não encontrada. Atualize a consulta."); onActionClose?.(); return; }
+        if (inlineAction.kind === "print") { await viewTicket(charge); onActionClose?.(); return; }
+        if (!canEditCharge(charge)) { toast.warning("Cobrança finalizada ou com boleto ativo. Atualize a consulta."); onActionClose?.(); return; }
+        if (inlineAction.kind === "edit") openEditChargeSheet(charge);
+        else await openTicketDialog(charge);
+      }
+      setActionReady(true);
+    })();
+    // The monthly action runs once per mounted dialog, using freshly loaded finance data.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, isLoading, inlineAction]);
+
+  useEffect(() => {
+    if (inlineAction && actionReady && !isSheetOpen && !ticketDialogCharge && !isSaving && !ticketGeneratingId) onActionClose?.();
+  }, [inlineAction, actionReady, isSheetOpen, ticketDialogCharge, isSaving, ticketGeneratingId, onActionClose]);
+
   return (
     <ManagementPage>
+      {inlineAction ? null : <>
       <FormPageHeader
         actions={
           <Button
@@ -1889,7 +1937,8 @@ export function RealEstateAssetFinanceManagement({
         )}
       </ManagementDataCard>
 
-      <Sheet onOpenChange={setIsSheetOpen} open={isSheetOpen}>
+      </>}
+      <Sheet onOpenChange={(open) => { if (!isSaving) setIsSheetOpen(open); }} open={isSheetOpen}>
         <SheetContent className="gap-0 !w-[32rem] !max-w-[32rem] max-sm:!w-full max-sm:!max-w-full">
           <SheetHeader className="border-b px-5 py-4">
             <SheetTitle>{sheetTitle}</SheetTitle>

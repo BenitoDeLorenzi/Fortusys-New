@@ -797,13 +797,13 @@ export function RealEstateManagement() {
             <House className="size-4" />
             Imóveis
           </TabsTrigger>
-          <TabsTrigger value="agenda">
-            <CalendarDays className="size-4" />
-            Agenda
-          </TabsTrigger>
           <TabsTrigger value="cobrancas">
             <BadgeDollarSign className="size-4" />
             Financeiro
+          </TabsTrigger>
+          <TabsTrigger value="agenda">
+            <CalendarDays className="size-4" />
+            Agenda
           </TabsTrigger>
           <TabsTrigger value="configuracoes">
             <Settings2 className="size-4" />
@@ -1114,7 +1114,7 @@ export function RealEstateManagement() {
             <>
               <ManagementFiltersSkeleton fields={3} />
               <ManagementDataCard count="Carregando" title="Imóveis">
-                <ManagementTableSkeleton columns={9} rows={8} />
+                <ManagementTableSkeleton columns={10} rows={8} />
               </ManagementDataCard>
             </>
           ) : (
@@ -1241,6 +1241,7 @@ export function RealEstateManagement() {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Motivo</TableHead>
                     <TableHead>Situação</TableHead>
+                    <TableHead>Contrato</TableHead>
                     <TableHead>Endereço</TableHead>
                     <TableHead>Fotos</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
@@ -1268,6 +1269,11 @@ export function RealEstateManagement() {
                       </TableCell>
                       <TableCell>
                         <AssetStatusBadge status={asset.status} />
+                      </TableCell>
+                      <TableCell>
+                        <SemanticStatusBadge tone={asset.contractStatus === "active" ? "success" : asset.contractStatus === "draft" ? "warning" : "neutral"}>
+                          {asset.contractStatus === "active" ? "Ativo" : asset.contractStatus === "draft" ? "Rascunho" : asset.contractStatus === "ended" ? "Encerrado" : asset.contractStatus === "canceled" ? "Cancelado" : "Sem contrato"}
+                        </SemanticStatusBadge>
                       </TableCell>
                       <TableCell className="max-w-72 truncate">
                         {asset.address || "-"}

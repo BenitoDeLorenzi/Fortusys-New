@@ -206,8 +206,39 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 
+  const contractStatuses = new Map<string, RealEstateAsset["contractStatus"]>();
+  const assetIds = (data ?? []).map((asset) => asset.id);
+  if (assetIds.length) {
+    let offset = 0;
+    while (true) {
+      const { data: leases, error: leasesError } = await supabase
+        .from("real_estate_leases")
+        .select("id,asset_id,status,created_at")
+        .in("asset_id", assetIds)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(offset, offset + 999);
+      if (leasesError) {
+        return NextResponse.json(
+          { message: "Não foi possível consultar a situação dos contratos." },
+          { status: 500 }
+        );
+      }
+      for (const lease of leases ?? []) {
+        if (!contractStatuses.has(lease.asset_id) || lease.status === "active") {
+          contractStatuses.set(lease.asset_id, lease.status);
+        }
+      }
+      if (!leases || leases.length < 1000) break;
+      offset += 1000;
+    }
+  }
+
   return NextResponse.json({
-    assets: ((data ?? []) as RealEstateAssetRow[]).map(mapAsset),
+    assets: ((data ?? []) as RealEstateAssetRow[]).map((row) => ({
+      ...mapAsset(row),
+      contractStatus: contractStatuses.get(row.id) ?? null,
+    })),
     total: count ?? 0,
     page,
     limit,
