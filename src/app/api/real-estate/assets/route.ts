@@ -481,6 +481,48 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
+  const { data: linkedCharge, error: linkedChargeError } = await supabase
+    .from("real_estate_charges")
+    .select("id")
+    .eq("asset_id", id)
+    .limit(1)
+    .maybeSingle();
+
+  if (linkedChargeError) {
+    return NextResponse.json(
+      { message: "Não foi possível verificar as cobranças do imóvel. Tente novamente." },
+      { status: 500 }
+    );
+  }
+
+  if (linkedCharge) {
+    return NextResponse.json(
+      {
+        message:
+          "Não é possível excluir este imóvel porque existem cobranças vinculadas a ele. Consulte o financeiro do imóvel. O histórico financeiro deve ser preservado.",
+      },
+      { status: 409 }
+    );
+  }
+
+  // Delete the record first: a foreign-key conflict must never remove its files.
+  const { error } = await supabase
+    .from("real_estate_assets")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return NextResponse.json(
+      {
+        message:
+          error.code === "23503"
+            ? "Não é possível excluir este imóvel porque existem registros vinculados a ele. Consulte os contratos e o financeiro do imóvel."
+            : "Não foi possível excluir o imóvel. Tente novamente.",
+      },
+      { status: error.code === "23503" ? 409 : 500 }
+    );
+  }
+
   const photoPaths = getStoragePaths(asset.photos);
   const documentPaths = getStoragePaths(asset.documents);
 
@@ -490,7 +532,7 @@ export async function DELETE(request: NextRequest) {
       .remove(photoPaths);
 
     if (error) {
-      return NextResponse.json({ message: error.message }, { status: 500 });
+      console.error("Falha ao remover fotos do imóvel excluído", { assetId: id, error });
     }
   }
 
@@ -500,20 +542,8 @@ export async function DELETE(request: NextRequest) {
       .remove(documentPaths);
 
     if (error) {
-      return NextResponse.json({ message: error.message }, { status: 500 });
+      console.error("Falha ao remover documentos do imóvel excluído", { assetId: id, error });
     }
-  }
-
-  const { error } = await supabase
-    .from("real_estate_assets")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return NextResponse.json(
-      { message: error.message },
-      { status: error.code === "23503" ? 409 : 500 }
-    );
   }
 
   await createInternalActionNotification(supabase, {

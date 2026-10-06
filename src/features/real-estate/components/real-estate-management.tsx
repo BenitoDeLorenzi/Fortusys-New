@@ -1567,7 +1567,8 @@ export function RealEstateManagement() {
             <AlertDialogDescription>
               O imóvel “{assetToDelete?.title}”, seu contrato de aluguel e os
               arquivos associados serão excluídos permanentemente. Esta ação
-              não pode ser desfeita.
+              não pode ser desfeita. Imóveis com contrato ativo ou cobranças
+              vinculadas não podem ser excluídos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

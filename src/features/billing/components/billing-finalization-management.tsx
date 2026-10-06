@@ -162,7 +162,7 @@ export function BillingFinalizationManagement() {
 
   function handleFinish() {
     window.sessionStorage.removeItem(BILLING_RESULT_KEY);
-    router.push("/cobranca");
+    router.push("/cobranca?tab=boletos");
   }
 
   if (!isLoaded) {

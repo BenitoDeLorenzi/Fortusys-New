@@ -449,7 +449,7 @@ function TicketStatusBadge({
   status: string;
   failureMessage?: string | null;
 }) {
-  const statusKey = status.toUpperCase();
+  const statusKey = status.trim().toUpperCase();
   const toneByStatus: Record<string, StatusTone> = {
     LIQUIDADO: "success",
     REGISTRADO: "info",
@@ -480,7 +480,7 @@ function TicketStatusBadge({
     </SemanticStatusBadge>
   );
 
-  if (!failureMessage || statusKey !== "FALHA") {
+  if (!["FALHA", "REJEITADO"].includes(statusKey)) {
     return badge;
   }
 
@@ -489,8 +489,8 @@ function TicketStatusBadge({
       <TooltipTrigger render={<button className="cursor-help" type="button" />}>
         {badge}
       </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-sm">
-        {failureMessage}
+      <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap break-words">
+        {failureMessage?.trim() || "O banco/TecnoSpeed ainda não informou o motivo. Atualize a consulta ou confira o histórico do boleto."}
       </TooltipContent>
     </Tooltip>
   );

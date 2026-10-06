@@ -327,7 +327,10 @@ function getTicketStatusTone(charge: RealEstateCharge): StatusTone {
 }
 
 function getTicketFailureMessage(charge: RealEstateCharge) {
-  return charge.ticketErrorMessage?.trim() || null;
+  return charge.ticketErrorMessage?.trim() ||
+    (["FALHA", "REJEITADO"].includes(normalizeProviderStatus(charge.ticketProviderStatus))
+      ? "O banco/TecnoSpeed ainda não informou o motivo. Atualize a consulta ou confira o histórico do boleto."
+      : null);
 }
 
 function canDeleteCharge(charge: RealEstateCharge) {
@@ -2554,9 +2557,9 @@ export function RealEstateAssetFinanceManagement({
                     </label>
                     <NativeSelect
                       disabled={!selectedTicketAccount}
-                      onChange={(event) =>
-                        setSelectedTicketAgreementId(event.target.value)
-                      }
+                      onChange={(event) => {
+                        setSelectedTicketAgreementId(event.target.value);
+                      }}
                       value={selectedTicketAgreementId}
                     >
                       {(selectedTicketAccount?.agreements.length ?? 0) === 0 ? (

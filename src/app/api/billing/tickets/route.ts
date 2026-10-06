@@ -1,3 +1,4 @@
+import { getBankTicketFields } from "@/features/billing/server/bank-ticket-fields";
 import { NextResponse } from "next/server";
 
 import type {
@@ -408,11 +409,16 @@ function enrichInstallmentTotals(tickets: BillingTicket[]) {
 }
 
 function getTicketFailureMessage(source: Record<string, unknown>) {
-  const messages = [
-    getStringField(source, ["motivo", "Motivo", "mensagem", "Mensagem"]),
-    getStringField(source, ["erro", "Erro", "_erro", "_mensagem"]),
-    getStringField(source, ["retorno", "Retorno", "situacao_motivo"]),
-  ].filter(Boolean);
+  const reasonFields = new Set([
+    "motivo", "mensagem", "erro", "_erro", "_mensagem", "retorno", "situacao_motivo",
+  ]);
+  const messages = [...new Set(
+    Object.entries(source)
+      .filter(([key]) => reasonFields.has(key.toLowerCase()))
+      .flatMap(([, value]) => extractTecnospeedMessages(value))
+      .map((message) => message.trim())
+      .filter(Boolean)
+  )];
 
   return messages.length ? messages.join(" ") : null;
 }
@@ -910,7 +916,8 @@ function buildTicketBodies(draft: BillingReviewDraft) {
 export async function POST(request: Request) {
   const incomingDraft = (await request.json()) as BillingReviewDraft;
   const draft = await enrichDraftBankData(incomingDraft);
-  const bodies = buildTicketBodies(draft);
+  const bankFields = getBankTicketFields(draft.account?.bankCode);
+  const bodies = buildTicketBodies(draft).map((body) => ({ ...body, ...bankFields }));
   const body = bodies[0];
   const requiredFields = [
     { label: "CPF/CNPJ do cedente", value: onlyDigits(draft.assignor.document) },

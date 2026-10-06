@@ -1,3 +1,4 @@
+import { getBankTicketFields } from "@/features/billing/server/bank-ticket-fields";
 import { NextResponse } from "next/server";
 
 import {
@@ -573,6 +574,7 @@ export async function POST(_request: Request, { params }: TicketRouteProps) {
       account?.agreements.find((item) => item.active !== false) ??
       account?.agreements[0] ??
       null;
+    const bankFields = getBankTicketFields(account?.bankCode);
     const messages = buildTicketMessages(chargeRow, leaseRow, itemRows);
     const penaltyStartDate = formatDateToTecnospeed(addDaysToIsoDate(chargeRow.due_date, 1));
     const body: Record<string, unknown> = {
@@ -581,6 +583,7 @@ export async function POST(_request: Request, { params }: TicketRouteProps) {
       CedenteContaNumeroDV: onlyDigits(account?.accountDigit),
       CedenteConvenioNumero: onlyDigits(agreement?.number),
       TituloCarteira: optional(agreement?.wallet),
+      ...bankFields,
       SacadoCPFCNPJ: onlyDigits(payerRow.document),
       SacadoNome: optional(payerRow.name),
       SacadoEmail: optional(payerRow.email),
