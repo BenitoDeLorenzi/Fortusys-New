@@ -14,6 +14,7 @@ import {
 } from "@/features/real-estate/documents";
 import type { RealEstateLeaseDocumentStatus } from "@/features/real-estate/leases";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { withCurrentLandlord } from "@/features/real-estate/server/current-landlord";
 
 type DraftRouteProps = {
   params: Promise<{ id: string }>;
@@ -1160,7 +1161,7 @@ export async function POST(request: NextRequest, { params }: DraftRouteProps) {
       );
     }
 
-    const assetRow = asset as AssetRow;
+    const assetRow = await withCurrentLandlord(asset as AssetRow);
     const tenantRow = tenant as PayerRow;
     const guarantorRow = guarantor as PayerRow | null;
     const currentDocuments = normalizeStoredDocuments(assetRow.documents);

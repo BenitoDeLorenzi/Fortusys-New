@@ -9,6 +9,7 @@ import type {
 } from "@/features/real-estate/leases";
 import { createInternalActionNotification } from "@/features/notifications/server/notification-service";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { withCurrentLandlord } from "@/features/real-estate/server/current-landlord";
 
 type ContractRouteProps = {
   params: Promise<{ id: string }>;
@@ -256,7 +257,12 @@ export async function GET(_request: NextRequest, { params }: ContractRouteProps)
     );
   }
 
-  const assetRow = asset as AssetRow;
+  let assetRow: AssetRow;
+  try {
+    assetRow = await withCurrentLandlord(asset as AssetRow);
+  } catch (error) {
+    return NextResponse.json({ message: error instanceof Error ? error.message : "Não foi possível atualizar os dados do cedente." }, { status: 502 });
+  }
   const tenantRow = tenant as PayerRow;
   const guarantorRow = guarantor as PayerRow | null;
 
